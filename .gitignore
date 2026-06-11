@@ -1,0 +1,6 @@
+target/
+.idea/
+*.iml
+Workspace_Geometria/
+.DS_Store
+**/.DS_Store

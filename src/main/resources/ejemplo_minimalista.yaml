@@ -1,0 +1,9 @@
+titulo: "Conceptos Básicos"
+subtitulo: "Ejemplo Minimalista"
+parrafo_inicial: "Este es un documento de prueba interno."
+tabla:
+  filas:
+    - grafico: "circulo_demo.svg"
+      col2: "Círculo"
+      col3: "Figura geométrica delimitada por una circunferencia."
+      col4: "A = πr²"
