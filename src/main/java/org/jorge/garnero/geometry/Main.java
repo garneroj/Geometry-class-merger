@@ -13,35 +13,11 @@ public class Main {
 
     public static void main (String[] args) {
 
-        GeoTableParser parser = new GeoTableParser () ;
-
         if (args.length != 0 && args.length != 2)
             Utils.ExitOnError (1, "⚠️ Uso incorrecto.") ;
 
-        // DEMO: from resources.
-        if (args.length == 0) {
-
-            System.out.println ("ℹ️ No se proveyeron argumentos. Ejecutando DEMO interna desde resources...") ;
-
-            // Carga el archivo desde dentro del .jar
-            try (InputStream yamlStream = Main.class.getResourceAsStream ("/ejemplo_minimalista.yaml")) {
-                if (yamlStream == null) {
-                    System.err.println ("❌ No se encontró el ejemplo en resources.") ;
-                    return;
-                }
-                ClaseEspecificacion leccion = parser.parsear (yamlStream) ;
-                imprimirReporte (leccion, "[directorio-resources-interno]") ;
-
-                // Generar PDF de demostración
-                PdfRenderEngine engine = new PdfRenderEngine () ;
-                engine.generarPdf (leccion, "[directorio-resources-interno]", "demo_minimalista.pdf") ;
-                System.out.println ("📄 PDF de demostración generado: demo_minimalista.pdf") ;
-
-            } catch (Exception e) {
-                System.err.println ("❌ Error en la demostración: " + e.getMessage ()) ;
-            }
-            System.exit (0) ;
-        }
+        if (args.length == 0)
+            demoAndExit () ;
 
         // PROD
         System.out.println ("🚀 Iniciando GeometryClassMerger en modo Workspace...") ;
@@ -52,14 +28,22 @@ public class Main {
         if (!archivoYaml.exists ())
             Utils.ExitOnError (2, "❌ El archivo YAML no existe: %s", archivoYaml.getAbsolutePath ()) ;
 
+        //--- parse
+        ClaseEspecificacion leccion = null;
         try {
-            ClaseEspecificacion leccion = parser.parsear (archivoYaml) ;
+            GeoTableParser parser  = new GeoTableParser () ;
+            leccion = parser.parsear (archivoYaml) ;
             imprimirReporte (leccion, directorioBaseSvg) ;
+        } catch (Exception e) {
+            Utils.ExitOnError (3, "❌ Error fatal al procesar el archivo YAML o generar el PDF: %s", e.getMessage ()) ;
+        }
 
-            // Generar PDF para producción
+        //--- generate
+        try {
             PdfRenderEngine engine = new PdfRenderEngine () ;
             String nombrePdfSalida = archivoYaml.getName ().replace (".yaml", ".pdf") ;
             engine.generarPdf (leccion, directorioBaseSvg, nombrePdfSalida) ;
+
             System.out.println ("📄 PDF generado exitosamente: " + nombrePdfSalida) ;
 
         } catch (Exception e) {
@@ -67,6 +51,42 @@ public class Main {
         }
 
     }
+
+    //----------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------
+
+    private static void demoAndExit () {
+
+        GeoTableParser parser = new GeoTableParser () ;
+
+        System.out.println ("ℹ️ No se proveyeron argumentos. Ejecutando DEMO interna desde resources...") ;
+
+        // Carga el archivo desde dentro del .jar
+        try (InputStream yamlStream = Main.class.getResourceAsStream ("/ejemplo_minimalista.yaml")) {
+            if (yamlStream == null) {
+                System.err.println ("❌ No se encontró el ejemplo en resources.") ;
+                return;
+            }
+            ClaseEspecificacion leccion = parser.parsear (yamlStream) ;
+            imprimirReporte (leccion, "[directorio-resources-interno]") ;
+
+            // Generar PDF de demostración
+            PdfRenderEngine engine = new PdfRenderEngine () ;
+            engine.generarPdf (leccion, "[directorio-resources-interno]", "demo_minimalista.pdf") ;
+            System.out.println ("📄 PDF de demostración generado: demo_minimalista.pdf") ;
+
+        } catch (Exception e) {
+            System.err.println ("❌ Error en la demostración: " + e.getMessage ()) ;
+        }
+
+        System.exit (0) ;
+
+    }
+
+    //----------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------
 
     private static void imprimirReporte (ClaseEspecificacion leccion, String directorioBaseSvg) {
 
@@ -84,4 +104,9 @@ public class Main {
         }
         System.out.println ("--------------------------------------------------") ;
     }
+
+    //----------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------
+
 }
