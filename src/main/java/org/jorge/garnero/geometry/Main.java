@@ -5,6 +5,7 @@ import org.jorge.garnero.geometry.parser.GeoTableParser;
 import org.jorge.garnero.geometry.pdf.PdfRenderEngine;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,20 +36,20 @@ public class Main {
             leccion = parser.parsear (archivoYaml) ;
             imprimirReporte (leccion, directorioBaseSvg) ;
         } catch (Exception e) {
-            Utils.ExitOnError (3, "❌ Error fatal al procesar el archivo YAML o generar el PDF: %s", e.getMessage ()) ;
+            Utils.ExitOnError (3, "❌ Error fatal al procesar el archivo YAML: %s", e.getMessage ()) ;
         }
 
         //--- generate
+        PdfRenderEngine engine = new PdfRenderEngine () ;
+        String nombrePdfSalida = archivoYaml.getName ().replace (".yaml", ".pdf") ;
+
         try {
-            PdfRenderEngine engine = new PdfRenderEngine () ;
-            String nombrePdfSalida = archivoYaml.getName ().replace (".yaml", ".pdf") ;
             engine.generarPdf (leccion, directorioBaseSvg, nombrePdfSalida) ;
-
-            System.out.println ("📄 PDF generado exitosamente: " + nombrePdfSalida) ;
-
-        } catch (Exception e) {
-            Utils.ExitOnError (3, "❌ Error fatal al procesar el archivo YAML o generar el PDF: %s", e.getMessage ()) ;
+        } catch (IOException e) {
+            Utils.ExitOnError (3, "❌ IOException al generar pdf: %s", e.getMessage ()) ;
         }
+
+        System.out.println ("📄 PDF generado exitosamente: " + nombrePdfSalida) ;
 
     }
 
