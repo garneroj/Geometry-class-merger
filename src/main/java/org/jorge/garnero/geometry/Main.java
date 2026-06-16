@@ -2,6 +2,7 @@ package org.jorge.garnero.geometry;
 
 import org.jorge.garnero.geometry.model.ClaseEspecificacion;
 import org.jorge.garnero.geometry.parser.GeoTableParser;
+import org.jorge.garnero.geometry.pdf.AsciidoctorRenderEngine;
 
 import java.io.File;
 import java.io.InputStream;
@@ -38,6 +39,9 @@ public class Main {
         }
 
         System.out.println ("📄 Yaml parseado exitosamente: ") ;
+
+        AsciidoctorRenderEngine engine = new AsciidoctorRenderEngine();
+        engine.generarPdfPrueba("./prueba_dinamica.pdf");
 
     }
 
