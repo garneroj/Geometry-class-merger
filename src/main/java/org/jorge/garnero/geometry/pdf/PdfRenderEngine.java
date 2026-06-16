@@ -10,86 +10,93 @@ import org.apache.batik.transcoder.TranscoderInput ;
 import org.apache.batik.transcoder.TranscoderOutput ;
 import org.apache.batik.transcoder.image.PNGTranscoder ;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject ;
+import org.jorge.garnero.geometry.model.FilaTabla;
+
 import java.io.ByteArrayOutputStream ;
-import java.io.StringReader;
 import java.nio.file.Paths ;
 import java.nio.file.Path ;
 import java.nio.file.Files ;
 
-import java.nio.charset.StandardCharsets;
-
 import java.io.IOException ;
 import java.io.InputStream ;
+
+import static org.jorge.garnero.geometry.pdf.PdfPar.FONT_SIZE_TABLE;
+import static org.jorge.garnero.geometry.pdf.PdfPar.MARGEN;
+import static org.jorge.garnero.geometry.pdf.PdfPar.FONT_SIZE_INI_PAR;
+import static org.jorge.garnero.geometry.pdf.PdfPar.FONT_SIZE_SUBTITLE;
+import static org.jorge.garnero.geometry.pdf.PdfPar.FONT_SIZE_TITLE;
+import static org.jorge.garnero.geometry.pdf.PdfPar.GRAPHICS_INTERSPACE;
+import static org.jorge.garnero.geometry.pdf.PdfPar.INI_TABLE_LINE_POSY;
+import static org.jorge.garnero.geometry.pdf.PdfPar.ROW_HEIGHT;
+import static org.jorge.garnero.geometry.pdf.PdfPar.TITLE_INTERSPACE;
 
 public class PdfRenderEngine {
 
     public void generarPdf (ClaseEspecificacion leccion, String directorioBaseSvg, String rutaArchivoSalida) throws IOException {
 
         try (PDDocument doc = getDocument ()) {
+
             PDType0Font fuenteMatematica = getMathFont (doc) ;
 
             try (PDPageContentStream stream = new PDPageContentStream (doc, doc.getPage (0))) {
 
-                showText (stream, fuenteMatematica, 18, 50, 720, leccion.getTitulo ()) ;
-                showText (stream, fuenteMatematica, 14, 50, 695, leccion.getSubtitulo ()) ;
-                showText (stream, fuenteMatematica, 12, 50, 670, leccion.getParrafoInicial ()) ;
+                int i = INI_TABLE_LINE_POSY ;
+                showText (stream, fuenteMatematica, FONT_SIZE_TITLE,    50, i + 3 * TITLE_INTERSPACE, leccion.getTitulo ()) ;
+                showText (stream, fuenteMatematica, FONT_SIZE_SUBTITLE, 50, i + 2 * TITLE_INTERSPACE, leccion.getSubtitulo ()) ;
+                showText (stream, fuenteMatematica, FONT_SIZE_INI_PAR,  50, i + 1 * TITLE_INTERSPACE, leccion.getParrafoInicial ()) ;
 
-                // 2. Coordenadas base
-                int cursorY  = 600 ;
-                int col1X    =  50 ;
-                int col2X    = 150 ;
-                int altoFila = 100 ;
+                int cursorY  = INI_TABLE_LINE_POSY ;
+                int techo    = cursorY ;
+                dibujarLinea (stream, MARGEN.get (0), cursorY, MARGEN.get (4), cursorY) ;
 
-                // Coordenadas para las líneas de la tabla
-                int margenIzq = 40 ;
-                int margenDer = 550 ;
-                int separadorVerticalX = 140 ; // Línea entre el gráfico y el texto
-                int techoTabla = cursorY + 20 ;
-
-                // Dibujar el "techo" superior de la tabla
-                dibujarLinea (stream, margenIzq, techoTabla, margenDer, techoTabla) ;
-
-                // 3. Bucle iterativo
                 var filas = leccion.getTabla ().getFilas () ;
-                for (int i = 0; i < filas.size () ; i++) {
-                    var fila = filas.get (i) ;
+                for (int f = 0; f < filas.size () ; f++) {
 
-                    // --- Renderizar Gráfico SVG ---
-                    Path rutaAbsolutaSvg = Paths.get (directorioBaseSvg, fila.getGrafico ()) ;
-                    if (Files.exists (rutaAbsolutaSvg)) {
-                        try {
-                            byte[] imagenBytes = convertirSvgAPngBytes (rutaAbsolutaSvg.toString ()) ;
-                            PDImageXObject pdImage = PDImageXObject.createFromByteArray (doc, imagenBytes, fila.getGrafico ()) ;
-                            stream.drawImage (pdImage, col1X, cursorY - 60, 80, 80) ;
-                        } catch (Exception e) {
-                            System.err.println ("⚠️ Error procesando SVG (" + fila.getGrafico () + "): " + e.getMessage ()) ;
-                        }
-                    } else {
-                        System.err.println ("❌ ARCHIVO NO ENCONTRADO: " + rutaAbsolutaSvg.toString ()) ;
-                    }
-                    // --- Renderizar Textos ---
-                    showText (stream, fuenteMatematica, 12, col2X, cursorY, fila.getCol2 ()) ;
+                    var fila = filas.get (f) ;
 
-                    // --- Dibujar la cuadrícula de esta fila ---
-                    int baseFila = cursorY - altoFila + 20 ;
+                    cursorY = cursorY - GRAPHICS_INTERSPACE ;
+                    renderGrafico (doc, stream, directorioBaseSvg, fila, cursorY) ;
 
-                    // Línea horizontal inferior
-                    dibujarLinea (stream, margenIzq, baseFila, margenDer, baseFila) ;
+                    showText (stream, fuenteMatematica, FONT_SIZE_TABLE, MARGEN.get (1), cursorY, fila.getCol2 ()) ;
+                    showText (stream, fuenteMatematica, FONT_SIZE_TABLE, MARGEN.get (2), cursorY, fila.getCol3 ()) ;
+                    if (fila.tieneCuartaColumna ())
+                        showText (stream, fuenteMatematica, FONT_SIZE_TABLE, MARGEN.get (3),cursorY, fila.getCol4 ()) ;
 
-                    // Líneas verticales (Borde izquierdo, separador central, y borde derecho)
-                    dibujarLinea (stream, margenIzq, techoTabla, margenIzq, baseFila) ;
-                    dibujarLinea (stream, separadorVerticalX, techoTabla, separadorVerticalX, baseFila) ;
-                    dibujarLinea (stream, margenDer, techoTabla, margenDer, baseFila) ;
+                    cursorY = cursorY - ROW_HEIGHT ;
+                    dibujarLinea (stream, MARGEN.get (1), techo  , MARGEN.get (1), cursorY) ;
+                    dibujarLinea (stream, MARGEN.get (2), techo  , MARGEN.get (2), cursorY) ;
+                    dibujarLinea (stream, MARGEN.get (3), techo  , MARGEN.get (3), cursorY) ;
+                    dibujarLinea (stream, MARGEN.get (4), techo  , MARGEN.get (4), cursorY) ;
 
-                    // Actualizar el techo para la siguiente iteración
-                    techoTabla = baseFila ;
+                    dibujarLinea (stream, MARGEN.get (0), cursorY, MARGEN.get (4), cursorY) ;
 
-                    // Bajar el cursor de contenido
-                    cursorY -= altoFila ;
+                    techo = cursorY ;
+
                 }
+
             }
             doc.save (rutaArchivoSalida) ;
         }
+    }
+
+    private void renderGrafico (PDDocument doc, PDPageContentStream stream, final String directorioBaseSvg, final FilaTabla fila, int ycoor) {
+
+        Path rutaAbsolutaSvg = Paths.get (directorioBaseSvg, fila.getGrafico ()) ;
+
+        if ( ! Files.exists (rutaAbsolutaSvg)) {
+            System.err.println ("❌ ARCHIVO NO ENCONTRADO: " + rutaAbsolutaSvg.toString ()) ;
+            return;
+        }
+
+        try {
+            byte[] imagenBytes = convertirSvgAPngBytes (rutaAbsolutaSvg.toString ()) ;
+            PDImageXObject pdImage = PDImageXObject.createFromByteArray (doc, imagenBytes, fila.getGrafico ()) ;
+            stream.drawImage (pdImage, MARGEN.get(0), ycoor - 60, 80, 80) ;
+
+        } catch (Exception e) {
+            System.err.println ("⚠️ Error procesando SVG (" + fila.getGrafico () + "): " + e.getMessage ()) ;
+        }
+
     }
 
     //----------------------------------------------------------------------------------------------
