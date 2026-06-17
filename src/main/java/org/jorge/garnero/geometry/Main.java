@@ -40,8 +40,10 @@ public class Main {
 
         System.out.println ("📄 Yaml parseado exitosamente: ") ;
 
-        AsciidoctorRenderEngine engine = new AsciidoctorRenderEngine();
-        engine.generarPdfPrueba("./prueba_dinamica.pdf");
+        String pdfName = Paths.get (args [0]).getFileName ().toString ().replace (".yaml",".pdf") ;
+        System.out.printf ("PDF=%s\n", pdfName);
+        AsciidoctorRenderEngine engine = new AsciidoctorRenderEngine ();
+        engine.generarPdfPrueba (leccion, pdfName) ;
 
     }
 
