@@ -3,6 +3,7 @@ package org.jorge.garnero.geometry;
 import org.jorge.garnero.geometry.model.ClaseEspecificacion;
 import org.jorge.garnero.geometry.parser.GeoTableParser;
 import org.jorge.garnero.geometry.pdf.AsciidoctorRenderEngine;
+import org.jorge.garnero.geometry.svg.parser.SvgTuner;
 
 import java.io.File;
 import java.io.InputStream;
@@ -18,6 +19,13 @@ public class Main {
 
         if (args.length == 0)
             demoAndExit () ;
+
+        if ("--svgtune".equals (args[0])) {
+            String filename = args[1];
+            String outputFilename = Utils.generateTunedPath (filename) ;
+            SvgTuner.tune (filename, outputFilename, 10.0) ;
+            System.exit (0) ;
+        }
 
         // PROD
         System.out.println ("🚀 Iniciando GeometryClassMerger en modo Workspace...") ;
@@ -40,9 +48,9 @@ public class Main {
 
         System.out.println ("📄 Yaml parseado exitosamente: ") ;
 
-        String pdfName = Paths.get (args [0]).getFileName ().toString ().replace (".yaml",".pdf") ;
-        System.out.printf ("PDF=%s\n", pdfName);
-        AsciidoctorRenderEngine engine = new AsciidoctorRenderEngine ();
+        String pdfName = Paths.get (args [0]).getFileName ().toString ().replace (".yaml", ".pdf") ;
+        System.out.printf ("PDF=%s\n", pdfName) ;
+        AsciidoctorRenderEngine engine = new AsciidoctorRenderEngine () ;
         engine.generarPdfPrueba (leccion, pdfName) ;
 
     }
