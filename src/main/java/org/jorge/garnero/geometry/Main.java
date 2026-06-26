@@ -3,7 +3,8 @@ package org.jorge.garnero.geometry;
 import org.jorge.garnero.geometry.model.ClaseEspecificacion;
 import org.jorge.garnero.geometry.parser.GeoTableParser;
 import org.jorge.garnero.geometry.pdf.AsciidoctorRenderEngine;
-import org.jorge.garnero.geometry.svg.parser.SvgTuner;
+import org.jorge.garnero.geometry.pdf.PdfConcatenator;
+import org.jorge.garnero.geometry.svg.tune.SvgTuner;
 
 import java.io.File;
 import java.io.InputStream;
@@ -13,6 +14,25 @@ import java.nio.file.Paths;
 public class Main {
 
     public static void main (String[] args) {
+
+        if (args.length > 0) {
+            if ("--concat".equals (args[0])) {
+                // flag + input
+                if (args.length < 2)
+                    Utils.ExitOnError (2, "❌ Bad syntax: --concat file1.pdf f2.pdf") ;
+
+                //--- how many input files?
+                int cantidadEntradas = args.length - 1;
+                String[] archivosDeEntrada = new String[cantidadEntradas];
+
+                //--- copy args from 1 to the end.
+                System.arraycopy (args, 1, archivosDeEntrada, 0, cantidadEntradas) ;
+
+                //--- concat
+                PdfConcatenator.merge (archivosDeEntrada, "salida.pdf") ;
+                System.exit (0) ;
+            }
+        }
 
         if (args.length != 0 && args.length != 2)
             Utils.ExitOnError (1, "⚠️ Uso incorrecto.") ;
@@ -27,14 +47,14 @@ public class Main {
             System.exit (0) ;
         }
 
-        // PROD
+        //--- yaml --2--> pdf
         System.out.println ("🚀 Iniciando GeometryClassMerger en modo Workspace...") ;
 
         File archivoYaml = new File (args [0]) ;
         String directorioBaseSvg = args [1] ;
 
         if (!archivoYaml.exists ())
-            Utils.ExitOnError (2, "❌ El archivo YAML no existe: %s", archivoYaml.getAbsolutePath ()) ;
+            Utils.ExitOnError (3, "❌ No yaml: %s", archivoYaml.getAbsolutePath ()) ;
 
         //--- parse
         ClaseEspecificacion leccion = null;

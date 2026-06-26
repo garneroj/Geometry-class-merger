@@ -1,10 +1,14 @@
 package org.jorge.garnero.geometry;
 
+import java.io.InputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+
+import org.asciidoctor.Attributes;
 
 public class Utils {
 
@@ -49,4 +53,32 @@ public class Utils {
             }
         }
 
+    public static Attributes getThemeAttributes (String resourcePath) {
+        try {
+            // 1. Leer el YAML desde src/main/resources
+            InputStream temaStream = Utils.class.getResourceAsStream (resourcePath) ;
+
+            if (temaStream == null) {
+                // Falla instantáneamente si el archivo no existe en el .jar
+                throw new RuntimeException ("No se encontró el tema en los recursos del proyecto: " + resourcePath) ;
+            }
+
+            // 2. Crear un archivo temporal
+            Path archivoTemaTemp = Files.createTempFile ("tema-geometria-", ".yml") ;
+            archivoTemaTemp.toFile ().deleteOnExit () ;
+
+            // 3. Copiar el contenido
+            Files.copy (temaStream, archivoTemaTemp, StandardCopyOption.REPLACE_EXISTING) ;
+
+            // 4. Retornar atributos
+            return Attributes.builder ()
+                             .attribute ("pdf-themesdir", archivoTemaTemp.getParent ().toAbsolutePath ().toString ())
+                             .attribute ("pdf-theme", archivoTemaTemp.getFileName ().toString ())
+                             .build () ;
+
+        } catch (Exception e) {
+            // Convierte cualquier falla de lectura/escritura en una excepción fatal
+            throw new RuntimeException ("Fallo fatal al cargar el tema visual '" + resourcePath + "'. Abortando.", e) ;
+        }
+    }
 }

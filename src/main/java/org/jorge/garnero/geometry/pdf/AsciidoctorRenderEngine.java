@@ -1,6 +1,7 @@
 package org.jorge.garnero.geometry.pdf;
 
 import org.asciidoctor.Asciidoctor;
+import org.asciidoctor.Attributes;
 import org.asciidoctor.Options;
 import org.asciidoctor.SafeMode;
 import org.jorge.garnero.geometry.Utils;
@@ -10,7 +11,8 @@ import java.io.File;
 
 public class AsciidoctorRenderEngine {
 
-    public void generarPdfPrueba (ClaseEspecificacion leccion, String rutaArchivoSalida) {
+    public void
+    generarPdfPrueba (ClaseEspecificacion leccion, String rutaArchivoSalida) {
 
         try (Asciidoctor asciidoctor = Asciidoctor.Factory.create ()) {
 
@@ -41,10 +43,13 @@ public class AsciidoctorRenderEngine {
             }
             adocBuilder.append ("|===\n") ;
 
+            Attributes atributosTema = Utils.getThemeAttributes ("/tema-geometria.yml") ;
+
             Options options = Options.builder ()
                                      .backend ("pdf")
                                      .toFile (new File (rutaArchivoSalida))
                                      .safe (SafeMode.UNSAFE) // Permite leer los SVG locales
+                                     .attributes (atributosTema)
                                      .build () ;
 
             //Utils.guardarAdocIntermedio (adocBuilder) ;

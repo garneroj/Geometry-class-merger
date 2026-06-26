@@ -1,0 +1,12 @@
+extends: default
+
+role:
+  blue:
+    font-color: #0000FF
+  red:
+    font-color: #FF0000
+  green:
+    font-color: #008000
+  resaltado:
+    font-color: #FF8C00
+    font-style: bold
